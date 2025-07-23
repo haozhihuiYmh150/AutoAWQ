@@ -26,6 +26,7 @@ Fork AutoAWQ
 1. 支持 DeepSeek-R1(fp8) w4a16 量化  
 2. 改进 ep 量化为多卡并行，在 8*H800 上，量化从 10h 降低到 2h+ 
 3. 改进 gemm , 将低效晦涩的 for 循环改进为高效易懂的 torch.tensor 运算
+4. 去除了一些 module
 
 ## Prerequisites  
 
