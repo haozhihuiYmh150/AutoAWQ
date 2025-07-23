@@ -273,12 +273,7 @@ def compute_best_clip(
 
 @torch.no_grad()
 def search_best_clip(group_size, zero_point, w_bit, name, linear, input_feat):
-    # avoid_clipping = ["q_", "k_", "query", "key", "Wqkv"]
-    # for name in named_linears.keys():
     # due to qk bmm, it is hard to clip precisely
-        # if any([_ in name for _ in avoid_clipping]):
-        #     continue
-    # logging.warning(f'search_best_clip {name}=w.shape:{linear.weight.shape},a.shape:{input_feat.shape}')
     max_val = compute_best_clip(
         group_size, zero_point, w_bit, linear.weight, input_feat
     )
@@ -318,8 +313,6 @@ def apply_quant(zero_point, version, w_bit, group_size, linear_layer: Dict[str, 
             zeros=zeros,
         )
         return q_linear
-        # q_linear.to(next(module.parameters()).device)
-        # set_op_by_name(module, name, q_linear)
 
 @torch.no_grad()
 def dq_fp8_weight(named_linears):
@@ -335,63 +328,3 @@ def dq_fp8_weight(named_linears):
                 logging.warning(f"Fmt error: {name}")
     torch.set_default_dtype(raw_dtype)
     logging.info(f'Over dq')
-
-# # dq and restore for FP8Linear
-# _global_fp8_weights = {}
-# _global_dq_weights = {}
-# _global_named_linears = None
-
-# @contextlib.contextmanager
-# def dq_fp8_weight(named_linears):
-#     [logging.warning(f'enable dq hook: {name=}') for name, m in named_linears.items()]
-#     logging.warning(f'Start dq weight')
-#     global _global_named_linears, _global_fp8_weights, _global_dq_weights
-#     _global_named_linears = named_linears
-#     _global_fp8_weights = {}
-#     _global_dq_weights = {}
-#     orig_weights = _global_fp8_weights
-#     dq_weights = _global_dq_weights
-#     raw_dtype = torch.get_default_dtype()
-#     torch.set_default_dtype(torch.bfloat16)
-#     device = next(iter(named_linears.values())).weight.device
-#     with torch.cuda.device(device):
-#         for name, m in named_linears.items():
-#             if hasattr(m, "weight") and hasattr(m, "weight_scale_inv"):
-#                 logging.warning(f'{name=}')
-#                 orig_weights[name] = m.weight
-#                 dq_weights[name] = weight_dequant(m.weight, m.weight_scale_inv)
-#                 m.weight = dq_weights[name]
-#             else:
-#                 logging.warning(f"Fmt error: {name}")
-#     torch.set_default_dtype(raw_dtype)
-#     logging.warning(f'Over dq')
-#     try:
-#         yield
-#     finally:
-#         logging.warning(f'Restore fp8 weight')
-#         for name, weight in orig_weights.items():
-#             logging.warning(f'{name=}')
-#             named_linears[name].weight = weight
-#         logging.warning(f'Restore over')
-
-# @contextlib.contextmanager
-# def restore_fp8_weight(module):
-#     [logging.warning(f'enable restore hook: {name=}') for name, m in module.named_modules()]
-#     logging.warning(f'Restore fp8 weight')
-#     global _global_named_linears, _global_fp8_weights, _global_dq_weights
-#     named_linears = _global_named_linears
-#     orig_weights = _global_fp8_weights
-#     dq_weights = _global_dq_weights
-#     logging.warning(f'{orig_weights.keys()=}')
-#     for name, weight in orig_weights.items():
-#         logging.warning(f'{name=}')
-#         named_linears[name].weight = weight
-#     logging.warning(f'Restore over')
-#     try:
-#         yield
-#     finally:
-#         logging.warning(f'Restore dq weight')
-#         for name, weight in dq_weights.items():
-#             logging.warning(f'{name=}')
-#             named_linears[name].weight = weight
-#         logging.warning(f'Restore over')
