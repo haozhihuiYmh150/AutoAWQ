@@ -83,8 +83,6 @@ class AwqExpertQuantizerDP(nn.Module):
         for name in names:
             input_feat[name] = input_feat[name].unwrap().to("cuda:"+str(t_id))
             named_linears[name].to("cuda:"+str(t_id))
-        # logging.warning(f'{next(module.parameters()).device=}')
-        # logging.warning(f'current_device={torch.cuda.current_device()}, input_feat.device={input_feat[names[0]].device}, named_linears.device={named_linears[names[0]].weight.device}')
 
         # [STEP 3]: Compute and apply clipping list
         if is_apply_clip:
@@ -345,11 +343,9 @@ class AwqQuantizer:
         w_scale = w_scale.view(org_shape)
         # Gets the average rescaled magnitude for each output channel
         w_mean = w_scale.mean(0)
-        # clear_memory(weight) # fix
 
         # [STEP 2]: Compute per-channel mean of the input activation with chunking
         # move inp to cpu to avoid memory leak
-        # inp_flat = inp.cpu().abs().view(-1, inp.shape[-1]) # fix
         inp_flat = inp.abs().view(-1, inp.shape[-1])
         num_elements = inp_flat.size(0)
         num_channels = inp_flat.size(1)
@@ -368,7 +364,6 @@ class AwqQuantizer:
             x_sum += chunk_sum.to(inp.device)
 
         x_mean = (x_sum / num_elements).to(inp.dtype)
-        # clear_memory(x_sum) # fix
 
         # [STEP 3]: Compute output of module
         with torch.no_grad():
@@ -412,7 +407,6 @@ class AwqQuantizer:
         best_scales = None
         best_error = float("inf")
 
-        # org_sd = {k: v.cpu() for k, v in module2inspect.state_dict().items()} #fix
         org_sd = {k: v.clone() for k, v in module2inspect.state_dict().items()}
 
         device = x.device
@@ -462,7 +456,6 @@ class AwqQuantizer:
 
         assert torch.isnan(best_scales).sum() == 0, best_scales
 
-        # return best_scales.detach().cpu() # fix
         return best_scales.detach()
 
     @torch.no_grad()
@@ -554,10 +547,6 @@ class AwqQuantizer:
         del samples
         inps = inps[0]
 
-        # fix
-        # modules[0] = modules[0].cpu()
-        # self.awq_model.move_embed(self.model, "cpu")
-
         if layer_kwargs.get("attention_mask") is not None:
             layer_kwargs["attention_mask"] = layer_kwargs["attention_mask"].to(
                 best_device
@@ -571,7 +560,6 @@ class AwqQuantizer:
         # firstly, get input features of all linear layers
         def cache_input_hook(m, x, y, name, feat_dict):
             x = x[0]
-            # x = x.detach().cpu() # fix
             x = x.detach()
             feat_dict[name].append(x)
 

@@ -189,35 +189,15 @@ class WQLinear_GEMM(nn.Module):
 
         pack_num = 32 // awq_linear.w_bit
 
-        # for idx in range(awq_linear.in_features):
-        #     intweight.append(
-        #         torch.round(
-        #             (linear.weight.data[:, idx] + scale_zeros[idx // group_size])
-        #             / awq_linear.scales[idx // group_size]
-        #         ).to(torch.int)[:, None]
-        #     )
-        # intweight = torch.cat(intweight, dim=1)
         group_indices = torch.arange(awq_linear.in_features) // group_size
         intweight = torch.round(
             (linear.weight.data.t() + scale_zeros[group_indices]) / awq_linear.scales[group_indices]
         ).to(torch.int32).contiguous()  # shape: [in_features, out_features]
 
-        # qweight = torch.zeros(
-        #     (intweight.shape[0], intweight.shape[1] // 32 * awq_linear.w_bit),
-        #     dtype=torch.int32,
-        #     device=intweight.device,
-        # )
         if awq_linear.w_bit == 4:
             order_map = [0, 2, 4, 6, 1, 3, 5, 7]
         else:
             raise NotImplementedError("Only 4-bit are supported for now.")
-        # # intweight shape: [in_features, out_features]
-        # # order_map = [0, 2, 4, 6, 1, 3, 5, 7]
-        # # awq_linear.w_bit = 4
-        # for col in range(intweight.shape[1] // pack_num):
-        #     for i in range(pack_num):
-        #         qweight_col = intweight[:, col * pack_num + order_map[i]]
-        #         qweight[:, col] |= qweight_col << (i * awq_linear.w_bit)
 
         # [0, 4, 8, 12, 16, 20, 24, 28]
         shifts = torch.arange(0, pack_num * awq_linear.w_bit, awq_linear.w_bit, device=intweight.device)
@@ -228,20 +208,10 @@ class WQLinear_GEMM(nn.Module):
 
         zeros = zeros.to(dtype=torch.int32)
 
-        # qzeros = torch.zeros(
-        #     (zeros.shape[0], zeros.shape[1] // 32 * awq_linear.w_bit),
-        #     dtype=torch.int32,
-        #     device=zeros.device,
-        # )
         if awq_linear.w_bit == 4:
             order_map = [0, 2, 4, 6, 1, 3, 5, 7]
         else:
             raise NotImplementedError("Only 4-bit are supported for now.")
-
-        # for col in range(zeros.shape[1] // pack_num):
-        #     for i in range(pack_num):
-        #         qzero_col = zeros[:, col * pack_num + order_map[i]]
-        #         qzeros[:, col] |= qzero_col << (i * awq_linear.w_bit)
 
         # [0, 4, 8, 12, 16, 20, 24, 28]
         shifts = torch.arange(0, pack_num * awq_linear.w_bit, awq_linear.w_bit, device=zeros.device)
