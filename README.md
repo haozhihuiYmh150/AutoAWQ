@@ -21,41 +21,19 @@
     <a href="https://runpod.io/?utm_source=referral&utm_medium=autoAWQ">
     <img src="https://github.com/aadil-runpod/rp-logo/assets/164108768/a8fc546d-cbab-44c4-9a5a-dfb6c400ad24" alt="RunPod Logo" width="100" border="0">  </a>
 </div>
+Fork AutoAWQ  
+  
+1. 支持 DeepSeek-R1(fp8) w4a16 量化  
+2. 改进 ep 量化为多卡并行，在 8*H800 上，量化从 10h 降低到 2h+ 
+3. 改进 gemm , 将低效晦涩的 for 循环改进为高效易懂的 torch.tensor 运算
 
-AutoAWQ is an easy-to-use package for 4-bit quantized models. AutoAWQ speeds up models by 3x and reduces memory requirements by 3x compared to FP16. AutoAWQ implements the Activation-aware Weight Quantization (AWQ) algorithm for quantizing LLMs.  AutoAWQ was created and improved upon from the [original work](https://github.com/mit-han-lab/llm-awq) from MIT.
+## Prerequisites  
 
-*Latest News* 🔥
-- (2025/07) DeepSeek-R1(fp8) awq support
+pip install transformers==4.49.0
 
-## Install
+## Install 
 
-### Prerequisites
-
-- NVIDIA:
-  - Your NVIDIA GPU(s) must be of Compute Capability 7.5. Turing and later architectures are supported.
-  - Your CUDA version must be CUDA 11.8 or later.
-- AMD:
-  -  Your ROCm version must be compatible with Triton.
-- Intel CPU and Intel GPU:
-  - Your torch and intel_extension_for_pytorch package version should at least 2.4 for optimized performance.
-  - Alternatively, you can rely on triton kernels for GPU, then you'll need to install [intel-xpu-backend-for-triton](https://github.com/intel/intel-xpu-backend-for-triton) along with compatible torch and transformers. Easiest way is to use [pre-built wheels](https://github.com/intel/intel-xpu-backend-for-triton?tab=readme-ov-file#install-pytorch-and-triton-from-nightly-wheels).
-
-### Install from PyPi
-
-There are a few ways to install AutoAWQ:
-
-1. Default:
-    - `pip install autoawq`
-    - NOTE: The default installation includes no external kernels and relies on Triton for inference.
-
-2. From release with kernels:
-    - `pip install autoawq[kernels]`
-    - NOTE: This requires you to match the latest torch version that the kernels were build with.
-    - NOTE: This installs https://github.com/casper-hansen/AutoAWQ_kernels
-
-3. From main branch for Intel CPU and Intel XPU optimized performance:
-    - `pip install autoawq[cpu]`
-    - NOTE: Minimum of torch 2.4.0 is required.
+python setup.py install --force
 
 ## Usage
 
